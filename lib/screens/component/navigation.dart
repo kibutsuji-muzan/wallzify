@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:wallzify_flutter/navbar.dart';
 import 'package:wallzify_flutter/screens/categories_page.dart';
 import 'package:wallzify_flutter/screens/category_page.dart';
+import 'package:wallzify_flutter/screens/component/navbar.dart';
 import 'package:wallzify_flutter/screens/favorite_page.dart';
 import 'package:wallzify_flutter/screens/home_page.dart';
 import 'package:wallzify_flutter/screens/wallpaper_page.dart';
@@ -92,109 +92,13 @@ class AppNavigation {
         builder: (context, state) {
           print(state.extra);
           int index = int.parse(state.pathParameters['index']!);
-          return WallpaperPage(index: index);
+          // var listType = state.extra;
+          return WallpaperPage(
+            index: index,
+            // listType: listType,
+          );
         },
       ),
-      // GoRoute(
-      //   path: '/login',
-      //   name: 'login',
-      //   builder: (context, state) => const LoginPage(),
-      // ),
-      // GoRoute(
-      //   path: '/signup',
-      //   name: 'signup',
-      //   builder: (context, state) => const SignupPage(),
-      // ),
-      // GoRoute(
-      //   path: '/otp/:query',
-      //   name: 'otp',
-      //   builder: (context, state) {
-      //     var query = state.pathParameters['query']!;
-      //     return OtpPage(
-      //       query: query,
-      //     );
-      //   },
-      // ),
-      // GoRoute(
-      //   path: '/changepassword',
-      //   name: 'changepassword',
-      //   builder: (context, state) {
-      //     return const ChangePassword();
-      //   },
-      // ),
-      // GoRoute(
-      //   path: '/resetpassword',
-      //   name: 'resetpassword',
-      //   builder: (context, state) {
-      //     return const ForgetPassword();
-      //   },
-      // ),
-      // GoRoute(
-      //   path: '/checkout/:query',
-      //   name: 'checkout',
-      //   builder: (context, state) {
-      //     String query = state.pathParameters['query']!;
-      //     return CheckoutPage(
-      //       id: query,
-      //     );
-      //   },
-      // ),
-      // GoRoute(
-      //   path: '/aboutus',
-      //   name: 'aboutus',
-      //   builder: (context, state) {
-      //     return const AboutUs();
-      //   },
-      // ),
-      // GoRoute(
-      //   path: '/splash/:query',
-      //   name: 'splash',
-      //   builder: (context, state) {
-      //     String query = state.pathParameters['query']!;
-      //     return SplashPage(
-      //       query: query,
-      //     );
-      //   },
-      // ),
-      // GoRoute(
-      //   path: '/service/:query',
-      //   name: 'service',
-      //   builder: (context, state) {
-      //     var query = state.pathParameters['query']!;
-      //     List<ServiceImage> images = state.extra! as List<ServiceImage>;
-      //     return ServicePage(
-      //       query: query,
-      //       images: images,
-      //     );
-      //   },
-      // ),
-      // GoRoute(
-      //   path: '/service_details',
-      //   name: 'service-details',
-      //   builder: (context, state) {
-      //     var ser = state.extra;
-      //     return ServiceDetailsPage(
-      //       service: ser as Service,
-      //     );
-      //   },
-      // ),
-      // GoRoute(
-      //   path: '/ordr_status',
-      //   name: 'ordr-status',
-      //   builder: (context, state) => ServiceStatusPage(
-      //     order: state.extra as Order,
-      //   ),
-      // ),
-      // GoRoute(
-      //   path: '/webview/:query',
-      //   name: 'webview',
-      //   builder: (context, state) {
-      //     var query = state.pathParameters['query']!;
-      //     return WebViewPage(
-      //       path: query,
-      //     );
-      //   },
-      // ),
     ],
   );
 
@@ -214,8 +118,10 @@ class _PageViewGoState extends State<PageViewGo> {
   @override
   void initState() {
     super.initState();
+
     Provider.of<CurrentPage>(context, listen: false)
         .setNavigation(widget.navigationShell);
+    Provider.of<DBPictureList>(context, listen: false).initDB();
   }
 
   void goBranch(int index) {

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:wallzify_flutter/colors.dart';
-import 'package:wallzify_flutter/navigation.dart';
+import 'package:wallzify_flutter/screens/component/navigation.dart';
 import 'package:wallzify_flutter/var.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  DatabaseThings.initDB();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then(
     (value) => runApp(
       MultiProvider(
@@ -15,6 +16,8 @@ void main() {
           ChangeNotifierProvider(create: (context) => CurrentPage()),
           ChangeNotifierProvider(create: (context) => PictureList()),
           ChangeNotifierProvider(create: (context) => PictureIndex()),
+          ChangeNotifierProvider(create: (context) => CategoryPictureList()),
+          ChangeNotifierProvider(create: (context) => DBPictureList()),
         ],
         child: const MainApp(),
       ),
@@ -22,8 +25,18 @@ void main() {
   );
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends StatefulWidget {
   const MainApp({super.key});
+
+  @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {

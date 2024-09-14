@@ -15,11 +15,15 @@ dependencies:
   cached_network_image: ^3.4.1
   async_wallpaper: ^2.1.0
   image_watermark: ^0.1.0
-  
+  permission_handler: ^11.3.1
+  floor: ^1.5.0
+  infinite_scroll_pagination: ^4.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  floor_generator: ^1.4.2
+  build_runner: ^2.1.2
 
 flutter:
   uses-material-design: true
@@ -27,6 +31,7 @@ flutter:
   assets:
     - assets/
     - assets/icons/
+    - assets/fonts/
 
   fonts:
     - family: Inter

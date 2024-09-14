@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:wallzify_flutter/colors.dart';
+import 'package:wallzify_flutter/screens/component/picture_grid.dart';
+import 'package:wallzify_flutter/screens/component/shrimmer.dart';
 import 'package:wallzify_flutter/var.dart';
 import 'package:http/http.dart' as http;
 
@@ -38,18 +40,22 @@ class _CategoryPageState extends State<CategoryPage> {
       log(e.toString());
       return;
     }
-    context.watch<PictureList>().catList.clear();
+    setData(response);
+  }
+
+  void setData(List response) {
+    var state = Provider.of<CategoryPictureList>(context, listen: false);
+    state.catList.clear();
     response.forEach(
-      (elem) => context
-          .watch<PictureList>()
-          .catList
-          .add(Picture.fromJson(json: elem)),
+      (element) => state.catList.add(
+        Picture.fromJson(json: element),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    var state = context.watch<PictureList>();
+    var state = context.watch<CategoryPictureList>();
     return Scaffold(
       backgroundColor: WallzifyColors.black,
       appBar: AppBar(
@@ -103,28 +109,57 @@ class _CategoryPageState extends State<CategoryPage> {
             const SizedBox(
               height: 35,
             ),
-            FutureBuilder(
-              future: getData(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: MediaQuery.of(context).size.height * 0.2,
-                      ),
-                      child: const CupertinoActivityIndicator(radius: 20.0),
-                    ),
-                  );
-                }
-                return LayoutBuilder(
-                  builder: (context, constraints) {
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return FutureBuilder(
+                  future: getData(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(
+                        child: GridView.builder(
+                          shrinkWrap: true,
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 8.0,
+                            crossAxisSpacing: 8.0,
+                            childAspectRatio:
+                                MediaQuery.of(context).size.width /
+                                    (MediaQuery.of(context).size.height * 0.75),
+                          ),
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 22.0),
+                          itemCount: 6,
+                          itemBuilder: (context, index) {
+                            return Shimmer(
+                              linearGradient: shimmerGradient,
+                              child: ShimmerLoading(
+                                isLoading: true,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color:
+                                        WallzifyColors.white.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(22),
+                                  ),
+                                  width: MediaQuery.of(context).size.width *
+                                      ((constraints.maxWidth < 600)
+                                          ? 0.42
+                                          : 0.3),
+                                  height: MediaQuery.of(context).size.height *
+                                      ((constraints.maxWidth < 600)
+                                          ? 0.3
+                                          : 0.3),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    }
                     return Center(
-                      child: Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        alignment: WrapAlignment.start,
+                      child: Column(
                         children: [
-                          if (context.watch<PictureList>().list.isEmpty)
+                          if (state.catList.isEmpty)
                             Padding(
                               padding: EdgeInsets.symmetric(
                                 vertical:
@@ -138,51 +173,10 @@ class _CategoryPageState extends State<CategoryPage> {
                                   fontWeight: FontWeight.normal,
                                 ),
                               ),
-                            ),
-                          GridView.builder(
-                            shrinkWrap: true,
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 8.0,
-                              crossAxisSpacing: 8.0,
-                              childAspectRatio: MediaQuery.of(context)
-                                      .size
-                                      .width /
-                                  (MediaQuery.of(context).size.height * 0.75),
-                            ),
-                            physics: const NeverScrollableScrollPhysics(),
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 22.0),
-                            itemCount: state.catList.length,
-                            itemBuilder: (context, index) {
-                              return GestureDetector(
-                                onTap: () {
-                                  Provider.of<PictureIndex>(context,
-                                          listen: false)
-                                      .updateIndex(index);
-                                  context.pushNamed('wall', pathParameters: {
-                                    'index': index.toString()
-                                  });
-                                },
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(22),
-                                  child: CachedNetworkImage(
-                                    imageUrl: state.catList[index].thumbnailUrl,
-                                    fit: BoxFit.cover,
-                                    width: MediaQuery.of(context).size.width *
-                                        ((constraints.maxWidth < 600)
-                                            ? 0.42
-                                            : 0.3),
-                                    height: MediaQuery.of(context).size.height *
-                                        ((constraints.maxWidth < 600)
-                                            ? 0.3
-                                            : 0.3),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                            )
+                          else
+                            PictureGrid(
+                                list: state.list, constraints: constraints)
                         ],
                       ),
                     );

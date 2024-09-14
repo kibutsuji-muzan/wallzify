@@ -1,16 +1,28 @@
 import 'package:async_wallpaper/async_wallpaper.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-String adUnitId = 'ca-app-pub-1821470381672343/2207897024';
+import 'package:wallzify_flutter/database.dart';
+import 'package:wallzify_flutter/entity/picture.dart' as entity;
 
 class UrlThings {
-  static String domain = "0fee-110-235-218-225.ngrok-free.app";
+  static String domain = "7d54-110-235-218-162.ngrok-free.app";
 
   static Uri generateUrl(String path, Map<String, dynamic>? headers) {
     return headers!.isEmpty
         ? Uri.https(domain, path)
         : Uri.https(domain, path, headers);
+  }
+}
+
+class DatabaseThings {
+  static late AppDatabase database;
+  static initDB() async {
+    database =
+        await $FloorAppDatabase.databaseBuilder('app_database.db').build();
+  }
+
+  static getAllEntity() {
+    return database.pictureDao.getAllPictures();
   }
 }
 
@@ -21,25 +33,63 @@ class WallpaperThings {
       wallpaperLocation: wallLocation,
       url: url,
       goToHome: false,
-      toastDetails: ToastDetails.success(),
+      toastDetails: ToastDetails.wallpaperChooser(),
       errorToastDetails: ToastDetails.error(),
     );
   }
 }
 
-class PictureList extends ChangeNotifier {
-  List<Picture> _list = [];
-  List<Picture> _catList = [];
-  List<Picture> get list => _list;
-  List<Picture> get catList => _catList;
+class DBPictureList extends ChangeNotifier {
+  List<entity.Picture> _list = [];
+  bool _like = false;
+  List<entity.Picture> get list => _list;
+  bool get like => _like;
 
-  update({required List<Picture> l}) {
-    _list = l;
+  initDB() async {
+    await DatabaseThings.initDB();
+    _list = await DatabaseThings.getAllEntity();
     notifyListeners();
   }
 
-  updateCategory({required List<Picture> l}) {
-    _catList = l;
+  updateDB(entity.Picture pic) {
+    DatabaseThings.database.pictureDao.insertPicture(pic);
+    _list.add(pic);
+    notifyListeners();
+  }
+
+  removeEntity(entity.Picture pic) {
+    DatabaseThings.database.pictureDao.deletePicture(pic);
+    _list.removeWhere(
+      (element) => element.id == pic.id,
+    );
+    notifyListeners();
+  }
+
+  void updateLike(String id) {
+    if (_list.where((element) => element.id == id).isEmpty) {
+      _like = false;
+    } else {
+      _like = true;
+    }
+    notifyListeners();
+  }
+}
+
+class PictureList extends ChangeNotifier {
+  List<Picture> _list = [];
+  List<Picture> get list => _list;
+}
+
+class CategoryPictureList extends ChangeNotifier {
+  List<Picture> _catList = [];
+
+  List<Picture> get catList => _catList;
+  List<Picture> get list => _catList;
+
+  update({required List l}) {
+    l.forEach(
+      (element) => _catList.add(Picture.fromJson(json: element)),
+    );
     notifyListeners();
   }
 }
@@ -53,22 +103,6 @@ class PictureIndex extends ChangeNotifier {
     notifyListeners();
   }
 }
-// final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-//     FlutterLocalNotificationsPlugin();
-
-// void requestNotificationPermissions() async {
-//   FirebaseMessaging messaging = FirebaseMessaging.instance;
-
-//   await messaging.requestPermission(
-//     alert: true,
-//     announcement: false,
-//     badge: true,
-//     carPlay: false,
-//     criticalAlert: false,
-//     provisional: false,
-//     sound: true,
-//   );
-// }
 
 class navIndex extends ChangeNotifier {
   int _index = 0;
@@ -86,14 +120,20 @@ class CurrentPage extends ChangeNotifier {
   late StatefulNavigationShell _navigationShell;
   int get pageIndex => _pageIndex;
 
-  void changePage(
-    int index,
-  ) {
+  void changePage(int index) {
     _navigationShell.goBranch(
       index,
       initialLocation: index == _navigationShell.currentIndex,
     );
     _pageIndex = index;
+    notifyListeners();
+  }
+
+  void back() {
+    _navigationShell.goBranch(
+      _pageIndex,
+      initialLocation: _pageIndex == _navigationShell.currentIndex,
+    );
     notifyListeners();
   }
 
@@ -103,13 +143,18 @@ class CurrentPage extends ChangeNotifier {
 }
 
 class Picture {
+  String id;
   String imageUrl;
   String thumbnailUrl;
-  Picture({required this.imageUrl, required this.thumbnailUrl});
+  Picture(
+      {required this.id, required this.imageUrl, required this.thumbnailUrl});
 
   factory Picture.fromJson({required Map json}) {
     print(json);
-    return Picture(imageUrl: json['image'], thumbnailUrl: json['thumbnail']);
+    return Picture(
+        id: json['id'],
+        imageUrl: json['image'],
+        thumbnailUrl: json['thumbnail']);
   }
 }
 

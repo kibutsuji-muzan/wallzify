@@ -5,8 +5,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:wallzify_flutter/colors.dart';
 import 'package:flutter/rendering.dart';
+import 'package:wallzify_flutter/screens/component/navbar.dart';
+import 'package:wallzify_flutter/screens/component/shrimmer.dart';
 import 'package:wallzify_flutter/var.dart';
 import 'package:http/http.dart' as http;
 
@@ -38,115 +41,146 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: WallzifyColors.black,
-      appBar: AppBar(
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (didPop) => context.read<CurrentPage>().back(),
+      child: Scaffold(
         backgroundColor: WallzifyColors.black,
-        surfaceTintColor: WallzifyColors.black,
-        toolbarHeight: 0,
-      ),
-      body: SingleChildScrollView(
-        controller: widget.controller,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).size.height * 0.1, left: 32),
-              child: Text(
-                'Wallzify',
-                style: TextStyle(
-                  fontFamily: 'Megrim',
-                  color: WallzifyColors.white,
-                  fontSize: 40,
+        appBar: AppBar(
+          backgroundColor: WallzifyColors.black,
+          surfaceTintColor: WallzifyColors.black,
+          toolbarHeight: 0,
+        ),
+        body: SingleChildScrollView(
+          controller: widget.controller,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).size.height * 0.1, left: 32),
+                child: Text(
+                  'Wallzify',
+                  style: TextStyle(
+                    fontFamily: 'Megrim',
+                    color: WallzifyColors.white,
+                    fontSize: 40,
+                  ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 32),
-              child: Text.rich(
-                style: TextStyle(
-                  color: WallzifyColors.white,
-                  fontSize: 14,
-                ),
-                const TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'Immersive ',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w400,
+              Padding(
+                padding: const EdgeInsets.only(left: 32),
+                child: Text.rich(
+                  style: TextStyle(
+                    color: WallzifyColors.white,
+                    fontSize: 14,
+                  ),
+                  const TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Immersive ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
-                    TextSpan(
-                      text: 'category ',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                      TextSpan(
+                        text: 'category ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    TextSpan(
-                      text: 'of\nwallpapers ↘',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w400,
+                      TextSpan(
+                        text: 'of\nwallpapers ↘',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(
-              height: 35,
-            ),
-            Center(
-              child: FutureBuilder(
-                future: getData(),
-                builder: (context, snapshot) {
-                  return LayoutBuilder(
-                    builder: (context, constraints) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical:
-                                  MediaQuery.of(context).size.height * 0.2,
-                            ),
-                            child:
-                                const CupertinoActivityIndicator(radius: 20.0),
-                          ),
-                        );
-                      }
-                      return Wrap(
-                        alignment: WrapAlignment.start,
-                        children: [
-                          for (final a in list)
-                            GestureDetector(
-                              onTap: () =>
-                                  context.pushNamed('category', extra: a),
-                              child: SizedBox(
-                                width: MediaQuery.of(context).size.width *
-                                    ((constraints.maxWidth < 600) ? 0.9 : 0.46),
-                                height: MediaQuery.of(context).size.height *
-                                    ((constraints.maxWidth < 600)
-                                        ? 0.25
-                                        : 0.18),
-                                child: LocationListItem(
-                                  imageUrl: a.imageUrl,
-                                  name: a.name,
-                                  desc: a.desc,
+              const SizedBox(
+                height: 35,
+              ),
+              Center(
+                child: FutureBuilder(
+                  future: getData(),
+                  builder: (context, snapshot) {
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Wrap(
+                              alignment: WrapAlignment.start,
+                              children: [
+                                for (int i = 0; i < 6; i++)
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Shimmer(
+                                      linearGradient: shimmerGradient,
+                                      child: ShimmerLoading(
+                                        isLoading: true,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: WallzifyColors.white
+                                                .withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(22),
+                                          ),
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              ((constraints.maxWidth < 600)
+                                                  ? 0.9
+                                                  : 0.46),
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              ((constraints.maxWidth < 600)
+                                                  ? 0.25
+                                                  : 0.18),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ]);
+                        }
+                        return Wrap(
+                          alignment: WrapAlignment.start,
+                          children: [
+                            for (final a in list)
+                              GestureDetector(
+                                onTap: () =>
+                                    context.pushNamed('category', extra: a),
+                                child: SizedBox(
+                                  width: MediaQuery.of(context).size.width *
+                                      ((constraints.maxWidth < 600)
+                                          ? 0.9
+                                          : 0.46),
+                                  height: MediaQuery.of(context).size.height *
+                                      ((constraints.maxWidth < 600)
+                                          ? 0.25
+                                          : 0.18),
+                                  child: LocationListItem(
+                                    imageUrl: a.imageUrl,
+                                    name: a.name,
+                                    desc: a.desc,
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
-                      );
-                    },
-                  );
-                },
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
-            const SizedBox(
-              height: 100,
-            )
-          ],
+              const SizedBox(
+                height: 100,
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -200,6 +234,20 @@ class _LocationListItemState extends State<LocationListItem> {
           imageUrl: widget.imageUrl,
           key: _backgroundImageKey,
           fit: BoxFit.cover,
+          placeholder: (context, url) => Shimmer(
+            linearGradient: shimmerGradient,
+            child: ShimmerLoading(
+              isLoading: true,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: WallzifyColors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -213,12 +261,15 @@ class _LocationListItemState extends State<LocationListItem> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            widget.name,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: Text(
+              widget.name,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           SizedBox(
@@ -411,55 +462,3 @@ class RenderParallax extends RenderBox
             Offset(0.0, childRect.top));
   }
 }
-
-class Location {
-  const Location({
-    required this.name,
-    required this.place,
-    required this.imageUrl,
-  });
-
-  final String name;
-  final String place;
-  final String imageUrl;
-}
-
-const urlPrefix =
-    'https://docs.flutter.dev/cookbook/img-files/effects/parallax';
-const locations = [
-  Location(
-    name: 'Mount Rushmore',
-    place: 'U.S.A',
-    imageUrl: '$urlPrefix/01-mount-rushmore.jpg',
-  ),
-  Location(
-    name: 'Gardens By The Bay',
-    place: 'Singapore',
-    imageUrl: '$urlPrefix/02-singapore.jpg',
-  ),
-  Location(
-    name: 'Machu Picchu',
-    place: 'Peru',
-    imageUrl: '$urlPrefix/03-machu-picchu.jpg',
-  ),
-  Location(
-    name: 'Vitznau',
-    place: 'Switzerland',
-    imageUrl: '$urlPrefix/04-vitznau.jpg',
-  ),
-  Location(
-    name: 'Bali',
-    place: 'Indonesia',
-    imageUrl: '$urlPrefix/05-bali.jpg',
-  ),
-  Location(
-    name: 'Mexico City',
-    place: 'Mexico',
-    imageUrl: '$urlPrefix/06-mexico-city.jpg',
-  ),
-  Location(
-    name: 'Cairo',
-    place: 'Egypt',
-    imageUrl: '$urlPrefix/07-cairo.jpg',
-  ),
-];

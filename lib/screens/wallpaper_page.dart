@@ -1,15 +1,22 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_watermark/image_watermark.dart';
 import 'package:provider/provider.dart';
 import 'package:wallzify_flutter/colors.dart';
+import 'package:wallzify_flutter/screens/component/file_storage.dart';
 import 'package:wallzify_flutter/var.dart';
+import 'package:wallzify_flutter/screens/component/bottom_sheet.dart';
+import 'package:wallzify_flutter/entity/picture.dart' as entity;
 
 class WallpaperPage extends StatefulWidget {
   final int index;
-  const WallpaperPage({
+  WallpaperPage({
     super.key,
     required this.index,
   });
@@ -37,83 +44,138 @@ class _WallpaperPageState extends State<WallpaperPage>
     super.initState();
   }
 
+  createWatermark() async {
+    FileStorage.getExternalDocumentPath();
+    var state = Provider.of<PictureList>(context, listen: false);
+    var file = await DefaultCacheManager().getSingleFile(
+      state.list[Provider.of<PictureIndex>(context, listen: false).pagePosition]
+          .imageUrl,
+    );
+    var img = await ImageWatermark.addTextWatermark(
+      imgBytes: await file.readAsBytes(),
+      watermarkText: 'Wallzify',
+      color: Colors.white,
+      dstX: 100,
+      dstY: 150,
+      font: ImageFont.readOtherFontZip(await loadAsset()),
+    );
+    FileStorage.downloadAndSaveImage(img);
+    print(await loadAsset());
+  }
+
+  Future<Uint8List> loadAsset() async {
+    ByteData a = await rootBundle.load('assets/fonts/Megrim.zip');
+    return a.buffer.asUint8List();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: WallzifyColors.black,
-      body: Stack(
-        children: [
-          WallSlider(
-            controller: _controller,
-            index: widget.index,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 22.0),
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) => Transform.translate(
-                offset: Offset(0, (animation.value * 150)),
-                child: child,
-              ),
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: ConstrainedBox(
-                  constraints:
-                      const BoxConstraints(maxWidth: 600, minHeight: 65),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      IconButton(
-                        onPressed: () {},
-                        icon: SvgPicture.asset('assets/icons/download.svg'),
-                      ),
-                      ElevatedButton(
-                          onPressed: () => showModalBottomSheet(
-                                context: context,
-                                backgroundColor:
-                                    const Color.fromRGBO(0, 0, 0, 0),
-                                isScrollControlled: true,
-                                builder: (context) =>
-                                    BottomSheet(index: widget.index),
-                              ),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 18),
-                            backgroundColor: WallzifyColors.buttonGrey,
-                            surfaceTintColor: WallzifyColors.white,
-                            foregroundColor: WallzifyColors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
-                                child: SvgPicture.asset(
-                                    'assets/icons/wallpaper.svg'),
-                              ),
-                              Text(
-                                'Set Wallpaper',
-                                style: TextStyle(
-                                  color: WallzifyColors.black,
-                                  fontSize: 12,
-                                ),
-                              )
-                            ],
-                          )),
-                      IconButton(
-                        onPressed: () => context.pop(),
-                        icon: SvgPicture.asset(
-                          'assets/icons/back.svg',
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (didPop) => context.read<CurrentPage>().back(),
+      child: Scaffold(
+        backgroundColor: WallzifyColors.black,
+        body: Stack(
+          children: [
+            WallSlider(
+              controller: _controller,
+              index: widget.index,
+              func: createWatermark,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 22.0),
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) => Transform.translate(
+                  offset: Offset(0, (animation.value * 200)),
+                  child: child,
+                ),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: ConstrainedBox(
+                    constraints:
+                        const BoxConstraints(maxWidth: 600, minHeight: 65),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          onPressed: () => createWatermark(),
+                          icon: SvgPicture.asset('assets/icons/download.svg'),
                         ),
-                      ),
-                    ],
+                        ElevatedButton(
+                            onPressed: () => showModalBottomSheet(
+                                  context: context,
+                                  backgroundColor:
+                                      const Color.fromRGBO(0, 0, 0, 0),
+                                  isScrollControlled: true,
+                                  builder: (context) =>
+                                      WallBottomSheet(index: widget.index),
+                                ),
+                            style: ElevatedButton.styleFrom(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 18),
+                              backgroundColor: WallzifyColors.buttonGrey,
+                              surfaceTintColor: WallzifyColors.white,
+                              foregroundColor: WallzifyColors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: SvgPicture.asset(
+                                      'assets/icons/wallpaper.svg'),
+                                ),
+                                Text(
+                                  'Set Wallpaper',
+                                  style: TextStyle(
+                                    color: WallzifyColors.black,
+                                    fontSize: 12,
+                                  ),
+                                )
+                              ],
+                            )),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            button(
+                              index: widget.index,
+                            ),
+                            const SizedBox(
+                              height: 20,
+                            ),
+                            IconButton(
+                              onPressed: () {},
+                              icon: SvgPicture.asset(
+                                'assets/icons/share.svg',
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 20,
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                context.read<CurrentPage>().back();
+                              },
+                              icon: SvgPicture.asset(
+                                'assets/icons/back.svg',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          )
-        ],
+            )
+          ],
+        ),
       ),
     );
   }
@@ -122,7 +184,13 @@ class _WallpaperPageState extends State<WallpaperPage>
 class WallSlider extends StatefulWidget {
   final AnimationController controller;
   int index;
-  WallSlider({super.key, required this.controller, required this.index});
+  Function func;
+  WallSlider({
+    super.key,
+    required this.controller,
+    required this.index,
+    required this.func,
+  });
 
   @override
   State<WallSlider> createState() => _WallSliderState();
@@ -131,7 +199,6 @@ class WallSlider extends StatefulWidget {
 class _WallSliderState extends State<WallSlider> {
   late PageController pageController;
   int activePage = 0;
-
   @override
   void initState() {
     pageController = PageController(
@@ -142,17 +209,29 @@ class _WallSliderState extends State<WallSlider> {
     super.initState();
   }
 
+  get state {
+    int index = Provider.of<CurrentPage>(context, listen: false).pageIndex;
+    switch (index) {
+      case 0:
+        return Provider.of<PictureList>(context, listen: false);
+      case 1:
+        return Provider.of<CategoryPictureList>(context, listen: false);
+      case 2:
+        return Provider.of<DBPictureList>(context, listen: false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    var state = context.read<PictureList>();
     return PageView.builder(
       pageSnapping: true,
       scrollDirection: Axis.vertical,
       physics: const BouncingScrollPhysics(),
-      allowImplicitScrolling: true,
+      // allowImplicitScrolling: true,
       controller: pageController,
       itemCount: state.list.length,
       onPageChanged: (page) {
+        context.read<DBPictureList>().updateLike(state.list[page].id);
         setState(() {
           activePage = page;
         });
@@ -166,7 +245,6 @@ class _WallSliderState extends State<WallSlider> {
   }
 
   AnimatedContainer slider(pagePosition, active) {
-    var state = context.watch<PictureList>();
     double margin = active ? 0 : 22;
     double radius = active ? 8 : 22;
     return AnimatedContainer(
@@ -208,177 +286,119 @@ class _WallSliderState extends State<WallSlider> {
   }
 }
 
-class BottomSheet extends StatefulWidget {
-  const BottomSheet({super.key, required this.index});
-  final int index;
+class button extends StatefulWidget {
+  int index;
+  button({super.key, required this.index});
+
   @override
-  State<BottomSheet> createState() => BottomSheetState();
+  State<button> createState() => _buttonState();
 }
 
-class BottomSheetState extends State<BottomSheet> {
+class _buttonState extends State<button> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  bool clicked = false;
+  List<entity.Picture> list = [];
+
+  @override
+  void initState() {
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    initList();
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 100), () => func());
+  }
+
+  get ostate {
+    int index = Provider.of<CurrentPage>(context, listen: false).pageIndex;
+    switch (index) {
+      case 0:
+        return Provider.of<PictureList>(context, listen: false);
+      case 1:
+        return Provider.of<CategoryPictureList>(context, listen: false);
+      case 2:
+        return Provider.of<DBPictureList>(context, listen: false);
+    }
+  }
+
+  void func() => Provider.of<DBPictureList>(context, listen: false).updateLike(
+        ostate.list[widget.index].id,
+      );
+
+  initList() async => list = await DatabaseThings.getAllEntity();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    var state = context.watch<PictureList>();
-    return Padding(
-      padding: const EdgeInsets.all(14),
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.35,
-        maxChildSize: 1,
-        minChildSize: 0.35,
-        snap: true,
-        builder: (context, scrollController) {
-          return Material(
-            color: Colors.white.withOpacity(0),
-            surfaceTintColor: Colors.white.withOpacity(0),
-            child: Stack(
-              alignment: Alignment.topCenter,
-              children: [
-                Container(
-                  height: 550,
-                  width: MediaQuery.of(context).size.width,
-                  constraints:
-                      const BoxConstraints(maxWidth: 600, minHeight: 550),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 15, horizontal: 22),
-                  decoration: const BoxDecoration(
-                    color: Color.fromRGBO(11, 10, 10, 1),
-                    borderRadius: BorderRadiusDirectional.all(
-                      Radius.circular(22),
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 5.0, top: 5.0),
-                        child: Text(
-                          'Wallzify',
-                          style: TextStyle(
-                            fontFamily: 'Megrim',
-                            color: WallzifyColors.white,
-                            fontSize: 35,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                        child: Text.rich(
-                          style: TextStyle(
-                            color: WallzifyColors.white,
-                            fontSize: 12,
-                          ),
-                          const TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Set ',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              TextSpan(
-                                text: 'wallpaper',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              TextSpan(
-                                text: 'According to\nyour ',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              TextSpan(
-                                text: 'preference ↘',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 28,
-                      ),
-                      _eButton(
-                        1,
-                        'Home Screen',
-                        state.list[context.watch<PictureIndex>().pagePosition]
-                            .imageUrl,
-                      ),
-                      _eButton(
-                        2,
-                        'Lock Screen',
-                        state.list[context.watch<PictureIndex>().pagePosition]
-                            .imageUrl,
-                      ),
-                      _button(
-                        3,
-                        'Set To Both',
-                        state.list[context.watch<PictureIndex>().pagePosition]
-                            .imageUrl,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+    var state = context.read<DBPictureList>();
+    return IconButton(
+      onPressed: () {
+        int page =
+            Provider.of<PictureIndex>(context, listen: false).pagePosition;
+        List pic = ostate.list;
+        print(pic);
+        print(ostate);
+        var ent = pic[page];
+        entity.Picture? a =
+            state.list.where((element) => element.id == ent.id).firstOrNull;
+
+        if (a == null) {
+          state.updateDB(
+            entity.Picture(
+              id: ent.id,
+              imageUrl: ent.imageUrl,
+              thumbnailUrl: ent.thumbnailUrl,
+            ),
+          );
+        } else {
+          if (Provider.of<CurrentPage>(context, listen: false).pageIndex == 2) {
+            context.pop();
+          }
+          state.removeEntity(
+            entity.Picture(
+              id: ent.id,
+              imageUrl: ent.imageUrl,
+              thumbnailUrl: ent.thumbnailUrl,
+            ),
+          );
+        }
+        context.read<DBPictureList>().updateLike(pic[page].id);
+
+        _controller.forward().then((value) {
+          _controller.reverse();
+        });
+      },
+      isSelected: context.watch<DBPictureList>().like,
+      icon: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _controller.value * 1 + 1,
+            child: SvgPicture.asset(
+              'assets/icons/heart.svg',
+              color: Colors.white,
+              width: 30,
             ),
           );
         },
       ),
-    );
-  }
-
-// Set wallpaper According to
-// your preference
-  _button(int i, String txt, String url) {
-    return TextButton(
-      onPressed: () {
-        WallpaperThings.setWallpaper(
-          url: url,
-          wallLocation: i,
-        );
-        Provider.of<CurrentPage>(context, listen: false).changePage(0);
-      },
-      style: TextButton.styleFrom(
-        fixedSize: Size.fromWidth(MediaQuery.of(context).size.width),
-        surfaceTintColor: Colors.white,
-        overlayColor: Colors.white,
-      ),
-      child: Text(
-        txt,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  _eButton(int i, String txt, String url) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: WallzifyColors.grey,
-        overlayColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        fixedSize: Size.fromWidth(MediaQuery.of(context).size.width),
-      ),
-      onPressed: () {
-        WallpaperThings.setWallpaper(
-          url: url,
-          wallLocation: i,
-        );
-        context.pop();
-        // Provider.of<CurrentPage>(context, listen: false).changePage(0);
-      },
-      child: Text(
-        txt,
-        style: TextStyle(
-          color: WallzifyColors.white,
-        ),
+      selectedIcon: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _controller.value * 1 + 1,
+            child: SvgPicture.asset(
+              'assets/Heart.svg',
+              width: 30,
+            ),
+          );
+        },
       ),
     );
   }

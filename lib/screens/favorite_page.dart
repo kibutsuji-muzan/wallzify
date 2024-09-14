@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:wallzify_flutter/colors.dart';
+import 'package:wallzify_flutter/dao/picture_dao.dart';
+import 'package:wallzify_flutter/database.dart';
+import 'package:wallzify_flutter/screens/component/picture_grid.dart';
+import 'package:wallzify_flutter/screens/component/shrimmer.dart';
+import 'package:wallzify_flutter/var.dart';
+import 'package:wallzify_flutter/entity/picture.dart' as entity;
 
 class FavoritePage extends StatefulWidget {
   final ScrollController controller;
@@ -14,6 +20,7 @@ class FavoritePage extends StatefulWidget {
 class _FavoritePageState extends State<FavoritePage> {
   @override
   Widget build(BuildContext context) {
+    List<entity.Picture> list = context.watch<DBPictureList>().list;
     return Scaffold(
       backgroundColor: WallzifyColors.black,
       appBar: AppBar(
@@ -73,27 +80,43 @@ class _FavoritePageState extends State<FavoritePage> {
             const SizedBox(
               height: 35,
             ),
-            Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                    vertical: MediaQuery.of(context).size.height * 0.13,
-                    horizontal: MediaQuery.of(context).size.width * 0.3),
-                child: Column(
-                  children: [
-                    SvgPicture.asset('assets/icons/save.svg'),
-                    const SizedBox(
-                      height: 25,
-                    ),
-                    Text(
-                      'No items currently\nadded here',
-                      style: TextStyle(
-                        color: WallzifyColors.white.withOpacity(0.5),
-                        fontSize: 14,
-                      ),
-                    )
-                  ],
-                ),
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return Center(
+                  child: Column(
+                    children: [
+                      if (list.isEmpty)
+                        Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                                vertical:
+                                    MediaQuery.of(context).size.height * 0.13,
+                                horizontal:
+                                    MediaQuery.of(context).size.width * 0.3),
+                            child: Column(
+                              children: [
+                                SvgPicture.asset('assets/icons/save.svg'),
+                                const SizedBox(
+                                  height: 25,
+                                ),
+                                Text(
+                                  'No items currently\nadded here',
+                                  style: TextStyle(
+                                    color:
+                                        WallzifyColors.white.withOpacity(0.5),
+                                    fontSize: 14,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        PictureGrid(constraints: constraints, list: list),
+                    ],
+                  ),
+                );
+              },
             ),
             const SizedBox(
               height: 100,
