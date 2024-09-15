@@ -1,16 +1,52 @@
+import 'dart:convert';
+
 import 'package:async_wallpaper/async_wallpaper.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wallzify_flutter/database.dart';
 import 'package:wallzify_flutter/entity/picture.dart' as entity;
+import 'package:http/http.dart' as http;
 
 class UrlThings {
-  static String domain = "7d54-110-235-218-162.ngrok-free.app";
+  static String domain = "ac2e-110-235-218-162.ngrok-free.app";
 
   static Uri generateUrl(String path, Map<String, dynamic>? headers) {
     return headers!.isEmpty
         ? Uri.https(domain, path)
         : Uri.https(domain, path, headers);
+  }
+}
+
+class APIRoute {
+  static Future<Map> getData(String path, Map<String, dynamic>? query) async {
+    print(Uri.https(UrlThings.domain, path, query));
+    http.Response res = await http.post(
+      Uri.https(UrlThings.domain, path, query),
+      body: {'width': '600'},
+    );
+    debugPrint(res.body);
+    Map response;
+    try {
+      response = jsonDecode(res.body);
+    } catch (e) {
+      return {};
+    }
+    return response;
+  }
+
+  static Future<Map> getCategoryData(
+      String path, Map<String, dynamic>? query) async {
+    http.Response res = await http.get(
+      Uri.https(UrlThings.domain, path, query),
+    );
+    debugPrint(res.body);
+    Map response;
+    try {
+      response = jsonDecode(res.body);
+    } catch (e) {
+      return {};
+    }
+    return response;
   }
 }
 
@@ -78,6 +114,19 @@ class DBPictureList extends ChangeNotifier {
 class PictureList extends ChangeNotifier {
   List<Picture> _list = [];
   List<Picture> get list => _list;
+
+  void updateList(List l) {
+    l.forEach(
+      (element) {
+        if (_list.where((elem) => elem.id == element['id']).isEmpty) {
+          _list.add(
+            Picture.fromJson(json: element),
+          );
+        }
+      },
+    );
+    notifyListeners();
+  }
 }
 
 class CategoryPictureList extends ChangeNotifier {
@@ -86,9 +135,13 @@ class CategoryPictureList extends ChangeNotifier {
   List<Picture> get catList => _catList;
   List<Picture> get list => _catList;
 
-  update({required List l}) {
+  updateList(List l) {
     l.forEach(
-      (element) => _catList.add(Picture.fromJson(json: element)),
+      (element) {
+        if (_catList.where((elem) => elem.id == element['id']).isEmpty) {
+          _catList.add(Picture.fromJson(json: element));
+        }
+      },
     );
     notifyListeners();
   }
@@ -163,11 +216,13 @@ class Category {
   String name;
   String desc;
   String imageUrl;
+  String thumbnailUrl;
   Category({
     required this.id,
     required this.name,
     required this.desc,
     required this.imageUrl,
+    required this.thumbnailUrl,
   });
 
   factory Category.fromJson({required Map json}) {
@@ -176,6 +231,7 @@ class Category {
       name: json['name'],
       desc: json['desc'],
       imageUrl: json['img'],
+      thumbnailUrl: json['thumbnail'],
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
@@ -33,6 +34,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
       log(e.toString());
       return;
     }
+
     list.clear();
     response.forEach(
       (elem) => list.add(Category.fromJson(json: elem)),
@@ -52,6 +54,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
           toolbarHeight: 0,
         ),
         body: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           controller: widget.controller,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -164,6 +167,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                                           : 0.18),
                                   child: LocationListItem(
                                     imageUrl: a.imageUrl,
+                                    thumbnailUrl: a.thumbnailUrl,
                                     name: a.name,
                                     desc: a.desc,
                                   ),
@@ -191,11 +195,13 @@ class LocationListItem extends StatefulWidget {
   LocationListItem({
     super.key,
     required this.imageUrl,
+    required this.thumbnailUrl,
     required this.name,
     required this.desc,
   });
 
   final String imageUrl;
+  final String thumbnailUrl;
   final String name;
   final String desc;
 
@@ -234,20 +240,37 @@ class _LocationListItemState extends State<LocationListItem> {
           imageUrl: widget.imageUrl,
           key: _backgroundImageKey,
           fit: BoxFit.cover,
-          placeholder: (context, url) => Shimmer(
-            linearGradient: shimmerGradient,
-            child: ShimmerLoading(
-              isLoading: true,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: WallzifyColors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(22),
-                ),
+          placeholder: (context, url) => Stack(
+            children: [
+              CachedNetworkImage(
+                imageUrl: widget.thumbnailUrl,
                 width: MediaQuery.of(context).size.width,
                 height: MediaQuery.of(context).size.height,
+                fit: BoxFit.cover,
               ),
-            ),
+              BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                ),
+              ),
+            ],
           ),
+          // placeholder: (context, url) => Shimmer(
+          //   linearGradient: shimmerGradient,
+          //   child: ShimmerLoading(
+          //     isLoading: true,
+          //     child: Container(
+          //       decoration: BoxDecoration(
+          //         color: WallzifyColors.white.withOpacity(0.1),
+          //         borderRadius: BorderRadius.circular(22),
+          //       ),
+          //       width: MediaQuery.of(context).size.width,
+          //       height: MediaQuery.of(context).size.height,
+          //     ),
+          //   ),
+          // ),
         ),
       ],
     );

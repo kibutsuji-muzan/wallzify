@@ -1,16 +1,10 @@
-import 'dart:convert';
-import 'dart:developer';
-
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:wallzify_flutter/colors.dart';
 import 'package:wallzify_flutter/screens/component/picture_grid.dart';
 import 'package:wallzify_flutter/screens/component/shrimmer.dart';
 import 'package:wallzify_flutter/var.dart';
-import 'package:http/http.dart' as http;
 
 class CategoryPage extends StatefulWidget {
   final ScrollController controller;
@@ -26,36 +20,63 @@ class CategoryPage extends StatefulWidget {
 }
 
 class _CategoryPageState extends State<CategoryPage> {
-  List<Picture> list = [];
+  final StreamController<List<dynamic>> _dataStreamController =
+      StreamController<List<dynamic>>();
+  Stream<List<dynamic>> get dataStream => _dataStreamController.stream;
+  final List<dynamic> _currentItems = [];
+  int _currentPage = 1;
+  late final ScrollController _scrollController;
+  bool _isFetchingData = false;
 
-  Future<void> getData() async {
-    http.Response res = await http.post(
-      UrlThings.generateUrl('category/${widget.category.id}/getCategory/', {}),
-      body: {'width': MediaQuery.of(context).size.width.ceil().toString()},
-    );
-    List response;
-    try {
-      response = jsonDecode(res.body);
-    } catch (e) {
-      log(e.toString());
+  Future<void> _fetchPaginatedData() async {
+    if (_isFetchingData) {
       return;
     }
-    setData(response);
-  }
+    try {
+      _isFetchingData = true;
+      setState(() {});
 
-  void setData(List response) {
-    var state = Provider.of<CategoryPictureList>(context, listen: false);
-    state.catList.clear();
-    response.forEach(
-      (element) => state.catList.add(
-        Picture.fromJson(json: element),
-      ),
-    );
+      final items = await getData();
+      _currentItems.addAll(items);
+      _dataStreamController.add(_currentItems);
+    } catch (e) {
+      _dataStreamController.addError(e);
+    } finally {
+      _isFetchingData = false;
+      setState(() {});
+    }
   }
 
   @override
+  void initState() {
+    super.initState();
+    context.read<CategoryPictureList>().catList.clear();
+    _scrollController = widget.controller;
+    _fetchPaginatedData();
+    _scrollController.addListener(() {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+
+      if (currentScroll == maxScroll) {
+        _fetchPaginatedData();
+      }
+    });
+  }
+
+  getData() async {
+    var res = await APIRoute.getCategoryData(
+      'c/${widget.category.id}/getCategory',
+      (_currentPage == 1) ? null : {'page': _currentPage.toString()},
+    );
+    setData(res['result']);
+    _currentPage++;
+    setState(() {});
+  }
+
+  setData(List l) => context.read<CategoryPictureList>().updateList(l);
+
+  @override
   Widget build(BuildContext context) {
-    var state = context.watch<CategoryPictureList>();
     return Scaffold(
       backgroundColor: WallzifyColors.black,
       appBar: AppBar(
@@ -65,6 +86,7 @@ class _CategoryPageState extends State<CategoryPage> {
       ),
       body: SingleChildScrollView(
         controller: widget.controller,
+        physics: const BouncingScrollPhysics(),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,12 +133,19 @@ class _CategoryPageState extends State<CategoryPage> {
             ),
             LayoutBuilder(
               builder: (context, constraints) {
-                return FutureBuilder(
-                  future: getData(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(
-                        child: GridView.builder(
+                return Center(
+                  child: Column(
+                    children: [
+                      PictureGrid(
+                        constraints: constraints,
+                        dataStream: dataStream,
+                        catId: widget.category.id,
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      if (_isFetchingData)
+                        GridView.builder(
                           shrinkWrap: true,
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
@@ -129,7 +158,7 @@ class _CategoryPageState extends State<CategoryPage> {
                           ),
                           physics: const NeverScrollableScrollPhysics(),
                           padding: const EdgeInsets.symmetric(horizontal: 22.0),
-                          itemCount: 6,
+                          itemCount: 4,
                           itemBuilder: (context, index) {
                             return Shimmer(
                               linearGradient: shimmerGradient,
@@ -154,33 +183,8 @@ class _CategoryPageState extends State<CategoryPage> {
                             );
                           },
                         ),
-                      );
-                    }
-                    return Center(
-                      child: Column(
-                        children: [
-                          if (state.catList.isEmpty)
-                            Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical:
-                                    MediaQuery.of(context).size.height * 0.2,
-                              ),
-                              child: Text(
-                                'Some Error Have Occured',
-                                style: TextStyle(
-                                  color: WallzifyColors.white.withOpacity(0.4),
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.normal,
-                                ),
-                              ),
-                            )
-                          else
-                            PictureGrid(
-                                list: state.list, constraints: constraints)
-                        ],
-                      ),
-                    );
-                  },
+                    ],
+                  ),
                 );
               },
             ),

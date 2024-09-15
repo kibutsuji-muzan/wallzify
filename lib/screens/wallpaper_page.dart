@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -16,10 +17,8 @@ import 'package:wallzify_flutter/entity/picture.dart' as entity;
 
 class WallpaperPage extends StatefulWidget {
   final int index;
-  WallpaperPage({
-    super.key,
-    required this.index,
-  });
+  final String? catId;
+  const WallpaperPage({super.key, required this.index, required this.catId});
 
   @override
   State<WallpaperPage> createState() => _WallpaperPageState();
@@ -72,7 +71,8 @@ class _WallpaperPageState extends State<WallpaperPage>
   Widget build(BuildContext context) {
     return PopScope(
       canPop: true,
-      onPopInvoked: (didPop) => context.read<CurrentPage>().back(),
+      onPopInvoked: (didPop) =>
+          Provider.of<CurrentPage>(context, listen: false).back(),
       child: Scaffold(
         backgroundColor: WallzifyColors.black,
         body: Stack(
@@ -81,6 +81,7 @@ class _WallpaperPageState extends State<WallpaperPage>
               controller: _controller,
               index: widget.index,
               func: createWatermark,
+              catId: widget.catId,
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 22.0),
@@ -185,11 +186,13 @@ class WallSlider extends StatefulWidget {
   final AnimationController controller;
   int index;
   Function func;
+  String? catId;
   WallSlider({
     super.key,
     required this.controller,
     required this.index,
     required this.func,
+    required this.catId,
   });
 
   @override
@@ -199,6 +202,67 @@ class WallSlider extends StatefulWidget {
 class _WallSliderState extends State<WallSlider> {
   late PageController pageController;
   int activePage = 0;
+
+  final StreamController<List<dynamic>> _dataStreamController =
+      StreamController<List<dynamic>>();
+  Stream<List<dynamic>> get dataStream => _dataStreamController.stream;
+  int _currentPage = 2;
+  bool _isFetchingData = false;
+
+  Future<void> _fetchPaginatedData() async {
+    if (_isFetchingData) {
+      return;
+    }
+    try {
+      _isFetchingData = true;
+      setState(() {});
+      List items;
+      if (Provider.of<CurrentPage>(context, listen: false).pageIndex == 0) {
+        items = await fetchData();
+      }
+      if (Provider.of<CurrentPage>(context, listen: false).pageIndex == 1) {
+        items = await getData();
+      } else {
+        items = [];
+      }
+      _dataStreamController.add(items);
+    } catch (e) {
+      _dataStreamController.addError(e);
+    } finally {
+      _isFetchingData = false;
+      setState(() {});
+    }
+  }
+
+  getData() async {
+    var res = await APIRoute.getCategoryData(
+      'c/${widget.catId}/getCategory',
+      (_currentPage == 1) ? null : {'page': _currentPage.toString()},
+    );
+    setData(res['result']);
+    _currentPage++;
+    setState(() {});
+  }
+
+  fetchData() async {
+    var res = await APIRoute.getData(
+      'index/',
+      (_currentPage == 1) ? null : {'page': _currentPage.toString()},
+    );
+    setData(res['result']);
+    _currentPage++;
+    setState(() {});
+  }
+
+  setData(List l) {
+    if (Provider.of<CurrentPage>(context, listen: false).pageIndex == 0) {
+      context.read<PictureList>().updateList(l);
+    }
+    if (Provider.of<CurrentPage>(context, listen: false).pageIndex == 1) {
+      context.read<CategoryPictureList>().updateList(l);
+    }
+  }
+
   @override
   void initState() {
     pageController = PageController(
@@ -207,6 +271,11 @@ class _WallSliderState extends State<WallSlider> {
     );
     activePage = widget.index;
     super.initState();
+    pageController.addListener(() {
+      if (pageController.page?.ceil() == state.list.length - 1) {
+        _fetchPaginatedData();
+      }
+    });
   }
 
   get state {
@@ -227,7 +296,6 @@ class _WallSliderState extends State<WallSlider> {
       pageSnapping: true,
       scrollDirection: Axis.vertical,
       physics: const BouncingScrollPhysics(),
-      // allowImplicitScrolling: true,
       controller: pageController,
       itemCount: state.list.length,
       onPageChanged: (page) {

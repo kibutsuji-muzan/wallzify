@@ -1,9 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:wallzify_flutter/colors.dart';
-import 'package:wallzify_flutter/dao/picture_dao.dart';
-import 'package:wallzify_flutter/database.dart';
 import 'package:wallzify_flutter/screens/component/picture_grid.dart';
 import 'package:wallzify_flutter/screens/component/shrimmer.dart';
 import 'package:wallzify_flutter/var.dart';
@@ -18,6 +18,47 @@ class FavoritePage extends StatefulWidget {
 }
 
 class _FavoritePageState extends State<FavoritePage> {
+  final StreamController<List<dynamic>> _dataStreamController =
+      StreamController<List<dynamic>>();
+  Stream<List<dynamic>> get dataStream => _dataStreamController.stream;
+  final List<dynamic> _currentItems = [];
+  int _currentPage = 1;
+  late final ScrollController _scrollController;
+  bool _isFetchingData = false;
+
+  Future<void> _fetchPaginatedData() async {
+    if (_isFetchingData) {
+      return;
+    }
+    try {
+      _isFetchingData = true;
+      setState(() {});
+
+      final items = [];
+      _currentItems.addAll(items);
+      _dataStreamController.add(_currentItems);
+    } catch (e) {
+      _dataStreamController.addError(e);
+    } finally {
+      _isFetchingData = false;
+      setState(() {});
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = widget.controller;
+    _fetchPaginatedData();
+    _scrollController.addListener(() {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+      if (currentScroll == maxScroll) {
+        _fetchPaginatedData();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     List<entity.Picture> list = context.watch<DBPictureList>().list;
@@ -30,6 +71,7 @@ class _FavoritePageState extends State<FavoritePage> {
       ),
       body: SingleChildScrollView(
         controller: widget.controller,
+        physics: const BouncingScrollPhysics(),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,7 +154,50 @@ class _FavoritePageState extends State<FavoritePage> {
                           ),
                         )
                       else
-                        PictureGrid(constraints: constraints, list: list),
+                        PictureGrid(
+                          constraints: constraints,
+                          dataStream: dataStream,
+                          catId: null,
+                        ),
+                      if (_isFetchingData)
+                        GridView.builder(
+                          shrinkWrap: true,
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 8.0,
+                            crossAxisSpacing: 8.0,
+                            childAspectRatio:
+                                MediaQuery.of(context).size.width /
+                                    (MediaQuery.of(context).size.height * 0.75),
+                          ),
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 22.0),
+                          itemCount: 4,
+                          itemBuilder: (context, index) {
+                            return Shimmer(
+                              linearGradient: shimmerGradient,
+                              child: ShimmerLoading(
+                                isLoading: true,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color:
+                                        WallzifyColors.white.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(22),
+                                  ),
+                                  width: MediaQuery.of(context).size.width *
+                                      ((constraints.maxWidth < 600)
+                                          ? 0.42
+                                          : 0.3),
+                                  height: MediaQuery.of(context).size.height *
+                                      ((constraints.maxWidth < 600)
+                                          ? 0.3
+                                          : 0.3),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                     ],
                   ),
                 );

@@ -92,8 +92,9 @@ class AppNavigation {
         builder: (context, state) {
           print(state.extra);
           int index = int.parse(state.pathParameters['index']!);
-          // var listType = state.extra;
+          String? catId = state.extra as String?;
           return WallpaperPage(
+            catId: catId,
             index: index,
             // listType: listType,
           );
