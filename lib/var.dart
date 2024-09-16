@@ -2,26 +2,26 @@ import 'dart:convert';
 
 import 'package:async_wallpaper/async_wallpaper.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:go_router/go_router.dart';
-import 'package:wallzify_flutter/database.dart';
-import 'package:wallzify_flutter/entity/picture.dart' as entity;
+import 'package:wallzify/database.dart';
+import 'package:wallzify/entity/picture.dart' as entity;
 import 'package:http/http.dart' as http;
 
 class UrlThings {
-  static String domain = "ac2e-110-235-218-162.ngrok-free.app";
+  static String domain = "47.129.197.134";
 
   static Uri generateUrl(String path, Map<String, dynamic>? headers) {
     return headers!.isEmpty
-        ? Uri.https(domain, path)
-        : Uri.https(domain, path, headers);
+        ? Uri.http(domain, path)
+        : Uri.http(domain, path, headers);
   }
 }
 
 class APIRoute {
   static Future<Map> getData(String path, Map<String, dynamic>? query) async {
-    print(Uri.https(UrlThings.domain, path, query));
     http.Response res = await http.post(
-      Uri.https(UrlThings.domain, path, query),
+      Uri.http(UrlThings.domain, path, query),
       body: {'width': '600'},
     );
     debugPrint(res.body);
@@ -37,7 +37,7 @@ class APIRoute {
   static Future<Map> getCategoryData(
       String path, Map<String, dynamic>? query) async {
     http.Response res = await http.get(
-      Uri.https(UrlThings.domain, path, query),
+      Uri.http(UrlThings.domain, path, query),
     );
     debugPrint(res.body);
     Map response;
@@ -65,9 +65,10 @@ class DatabaseThings {
 class WallpaperThings {
   static void setWallpaper(
       {required String url, required int wallLocation}) async {
-    await AsyncWallpaper.setWallpaper(
+    var file = await DefaultCacheManager().getSingleFile(url);
+    await AsyncWallpaper.setWallpaperFromFile(
+      filePath: file.path,
       wallpaperLocation: wallLocation,
-      url: url,
       goToHome: false,
       toastDetails: ToastDetails.wallpaperChooser(),
       errorToastDetails: ToastDetails.error(),
@@ -203,11 +204,9 @@ class Picture {
       {required this.id, required this.imageUrl, required this.thumbnailUrl});
 
   factory Picture.fromJson({required Map json}) {
-    print(json);
+    String img = 'https://drive.google.com/uc?export=download&id=${json['id']}';
     return Picture(
-        id: json['id'],
-        imageUrl: json['image'],
-        thumbnailUrl: json['thumbnail']);
+        id: json['id'], imageUrl: img, thumbnailUrl: json['thumbnail']);
   }
 }
 
@@ -226,11 +225,12 @@ class Category {
   });
 
   factory Category.fromJson({required Map json}) {
+    String img = 'https://drive.google.com/uc?export=download&id=${json['id']}';
     return Category(
       id: json['id'],
       name: json['name'],
       desc: json['desc'],
-      imageUrl: json['img'],
+      imageUrl: img,
       thumbnailUrl: json['thumbnail'],
     );
   }

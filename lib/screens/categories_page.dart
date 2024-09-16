@@ -7,11 +7,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:wallzify_flutter/colors.dart';
+import 'package:wallzify/colors.dart';
 import 'package:flutter/rendering.dart';
-import 'package:wallzify_flutter/screens/component/navbar.dart';
-import 'package:wallzify_flutter/screens/component/shrimmer.dart';
-import 'package:wallzify_flutter/var.dart';
+import 'package:wallzify/screens/component/shrimmer.dart';
+import 'package:wallzify/var.dart';
 import 'package:http/http.dart' as http;
 
 class CategoriesPage extends StatefulWidget {
@@ -28,6 +27,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
   Future<void> getData() async {
     http.Response res = await http.get(UrlThings.generateUrl('category', {}));
     List response;
+    print(res.body);
     try {
       response = jsonDecode(res.body);
     } catch (e) {

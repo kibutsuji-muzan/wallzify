@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:wallzify_flutter/colors.dart';
-import 'package:wallzify_flutter/screens/component/picture_grid.dart';
-import 'package:wallzify_flutter/screens/component/shrimmer.dart';
-import 'package:wallzify_flutter/var.dart';
+import 'package:wallzify/colors.dart';
+import 'package:wallzify/screens/component/picture_grid.dart';
+import 'package:wallzify/screens/component/shrimmer.dart';
+import 'package:wallzify/var.dart';
 
 class CategoryPage extends StatefulWidget {
   final ScrollController controller;

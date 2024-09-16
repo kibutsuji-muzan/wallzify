@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:wallzify_flutter/colors.dart';
-import 'package:wallzify_flutter/var.dart';
+import 'package:wallzify/colors.dart';
+import 'package:wallzify/var.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 

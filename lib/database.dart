@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:floor/floor.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
 
-import 'package:wallzify_flutter/dao/picture_dao.dart';
-import 'package:wallzify_flutter/entity/picture.dart';
+import 'package:wallzify/dao/picture_dao.dart';
+import 'package:wallzify/entity/picture.dart';
 
 part 'database.g.dart';
 

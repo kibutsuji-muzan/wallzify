@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:wallzify_flutter/colors.dart';
-import 'package:wallzify_flutter/var.dart';
+import 'package:wallzify/colors.dart';
+import 'package:wallzify/var.dart';
 
 class WallBottomSheet extends StatefulWidget {
   const WallBottomSheet({super.key, required this.index});

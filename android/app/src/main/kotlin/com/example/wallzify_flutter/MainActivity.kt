@@ -1,4 +1,4 @@
-package com.example.wallzify_flutter
+package com.ank3r.wallzify
 
 import io.flutter.embedding.android.FlutterActivity
 

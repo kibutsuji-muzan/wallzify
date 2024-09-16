@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
-import 'package:wallzify_flutter/colors.dart';
-import 'package:wallzify_flutter/screens/component/picture_grid.dart';
-import 'package:wallzify_flutter/screens/component/shrimmer.dart';
-import 'package:wallzify_flutter/var.dart';
-import 'package:wallzify_flutter/entity/picture.dart' as entity;
+import 'package:url_launcher/url_launcher.dart';
+import 'package:wallzify/colors.dart';
+import 'package:wallzify/screens/component/picture_grid.dart';
+import 'package:wallzify/screens/component/shrimmer.dart';
+import 'package:wallzify/var.dart';
+import 'package:wallzify/entity/picture.dart' as entity;
 
 class FavoritePage extends StatefulWidget {
   final ScrollController controller;
@@ -22,7 +23,6 @@ class _FavoritePageState extends State<FavoritePage> {
       StreamController<List<dynamic>>();
   Stream<List<dynamic>> get dataStream => _dataStreamController.stream;
   final List<dynamic> _currentItems = [];
-  int _currentPage = 1;
   late final ScrollController _scrollController;
   bool _isFetchingData = false;
 
@@ -78,14 +78,35 @@ class _FavoritePageState extends State<FavoritePage> {
           children: [
             Padding(
               padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).size.height * 0.1, left: 32),
-              child: Text(
-                'Wallzify',
-                style: TextStyle(
-                  fontFamily: 'Megrim',
-                  color: WallzifyColors.white,
-                  fontSize: 40,
-                ),
+                top: MediaQuery.of(context).size.height * 0.1,
+                left: 32,
+                right: 12,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Wallzify',
+                    style: TextStyle(
+                      fontFamily: 'Megrim',
+                      color: WallzifyColors.white,
+                      fontSize: 40,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () async {
+                      final Uri url = UrlThings.generateUrl('/p/policy/', {});
+                      print(url);
+                      if (!await launchUrl(url)) {
+                        throw Exception('Could not launch $url');
+                      }
+                    },
+                    icon: const Icon(
+                      Icons.privacy_tip_outlined,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
             Padding(

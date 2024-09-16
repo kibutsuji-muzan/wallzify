@@ -1,5 +1,5 @@
 import 'package:floor/floor.dart';
-import 'package:wallzify_flutter/entity/picture.dart';
+import 'package:wallzify/entity/picture.dart';
 
 @dao
 abstract class PictureDao {

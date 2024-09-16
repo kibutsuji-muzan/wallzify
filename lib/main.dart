@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:wallzify_flutter/colors.dart';
-import 'package:wallzify_flutter/screens/component/navigation.dart';
-import 'package:wallzify_flutter/var.dart';
+import 'package:wallzify/colors.dart';
+import 'package:wallzify/screens/component/navigation.dart';
+import 'package:wallzify/var.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

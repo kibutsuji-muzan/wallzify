@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -9,11 +9,11 @@ import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_watermark/image_watermark.dart';
 import 'package:provider/provider.dart';
-import 'package:wallzify_flutter/colors.dart';
-import 'package:wallzify_flutter/screens/component/file_storage.dart';
-import 'package:wallzify_flutter/var.dart';
-import 'package:wallzify_flutter/screens/component/bottom_sheet.dart';
-import 'package:wallzify_flutter/entity/picture.dart' as entity;
+import 'package:wallzify/colors.dart';
+import 'package:wallzify/screens/component/file_storage.dart';
+import 'package:wallzify/var.dart';
+import 'package:wallzify/screens/component/bottom_sheet.dart';
+import 'package:wallzify/entity/picture.dart' as entity;
 
 class WallpaperPage extends StatefulWidget {
   final int index;
@@ -59,8 +59,25 @@ class _WallpaperPageState extends State<WallpaperPage>
       font: ImageFont.readOtherFontZip(await loadAsset()),
     );
     FileStorage.downloadAndSaveImage(img);
-    print(await loadAsset());
+    showSnack();
   }
+
+  showSnack() => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(22),
+            ),
+          ),
+          width: MediaQuery.of(context).size.width * 0.45,
+          backgroundColor: WallzifyColors.black,
+          content: const Text(
+            "Download Successful",
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
 
   Future<Uint8List> loadAsset() async {
     ByteData a = await rootBundle.load('assets/fonts/Megrim.zip');
@@ -161,6 +178,7 @@ class _WallpaperPageState extends State<WallpaperPage>
                             ),
                             IconButton(
                               onPressed: () {
+                                context.pop();
                                 context.read<CurrentPage>().back();
                               },
                               icon: SvgPicture.asset(
@@ -316,7 +334,7 @@ class _WallSliderState extends State<WallSlider> {
     double margin = active ? 0 : 22;
     double radius = active ? 8 : 22;
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 300),
       curve: Curves.easeIn,
       margin: EdgeInsets.all(margin),
       child: GestureDetector(

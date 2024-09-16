@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:wallzify_flutter/colors.dart';
-import 'package:wallzify_flutter/screens/component/picture_grid.dart';
-import 'package:wallzify_flutter/screens/component/shrimmer.dart';
-import 'package:wallzify_flutter/var.dart';
+import 'package:wallzify/colors.dart';
+import 'package:wallzify/screens/component/picture_grid.dart';
+import 'package:wallzify/screens/component/shrimmer.dart';
+import 'package:wallzify/var.dart';
 
 class HomePage extends StatefulWidget {
   final ScrollController controller;
@@ -71,6 +71,7 @@ class _HomePageState extends State<HomePage> {
   setData(List l) => context.read<PictureList>().updateList(l);
 
   refresh() {
+    widget.controller.position.moveTo(0);
     context.read<PictureList>().list.clear();
     _currentPage = 1;
     _fetchPaginatedData();
@@ -87,6 +88,7 @@ class _HomePageState extends State<HomePage> {
       ),
       body: RefreshIndicator(
         onRefresh: () => Future.delayed(const Duration(seconds: 1), refresh()),
+        displacement: 40,
         color: WallzifyColors.white,
         backgroundColor: WallzifyColors.black,
         child: SingleChildScrollView(

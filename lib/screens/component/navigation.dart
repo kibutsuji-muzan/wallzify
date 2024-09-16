@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:wallzify_flutter/screens/categories_page.dart';
-import 'package:wallzify_flutter/screens/category_page.dart';
-import 'package:wallzify_flutter/screens/component/navbar.dart';
-import 'package:wallzify_flutter/screens/favorite_page.dart';
-import 'package:wallzify_flutter/screens/home_page.dart';
-import 'package:wallzify_flutter/screens/wallpaper_page.dart';
-import 'package:wallzify_flutter/var.dart';
+import 'package:wallzify/screens/categories_page.dart';
+import 'package:wallzify/screens/category_page.dart';
+import 'package:wallzify/screens/component/navbar.dart';
+import 'package:wallzify/screens/favorite_page.dart';
+import 'package:wallzify/screens/home_page.dart';
+import 'package:wallzify/screens/wallpaper_page.dart';
+import 'package:wallzify/var.dart';
 
 class AppNavigation {
   AppNavigation._();
