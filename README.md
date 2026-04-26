@@ -28,7 +28,7 @@ Wallzify is a beautifully designed Flutter application that offers a vast collec
 
 1. Clone the repo:
    ```bash
-   git clone https://github.com/your-username/wallzify.git
+   git clone https://github.com/kibutsuji-muzan/wallzify.git
    cd wallzify
    ```
 
